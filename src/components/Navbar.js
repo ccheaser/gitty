@@ -1,33 +1,40 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import whiteLogo from '../assets/images/Gitty_logo_white.png';
-import darkLogo from '../assets/images/Gitty_logo_dark.png';
+import { useTheme } from '../context/ThemeContext';
+import { FaSun, FaMoon } from 'react-icons/fa';
+import { logAction } from '../utils/logAction';
+import logo from '../assets/images/Gitty_logo_dark.png';
 
-function Navbar({ toggleSidebar, isSidebarOpen }) {
+function Navbar({ toggleSidebar }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-  const isDashboard = location.pathname === '/dashboard';
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const handleMenuToggle = () => {
+  const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logAction('logout', { email: user?.email || 'unknown' });
+      await logout();
+    } catch (err) {
+      console.error('Çıkış yaparken hata oluştu:', err);
+    }
+  };
+
+  const isDashboard = location.pathname.startsWith('/dashboard');
+
   return (
-    <nav className="fixed top-0 left-0 w-full bg-gray-900 text-white z-50 shadow-lg">
-      <div className="flex justify-between items-center px-4 py-3 md:px-6">
+    <nav className="fixed top-0 left-0 w-full bg-card-light dark:bg-card-dark shadow-soft dark:shadow-soft-dark z-50">
+      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           {isDashboard && (
             <button
               onClick={toggleSidebar}
-              className="md:hidden text-white focus:outline-none"
+              className="text-text-light dark:text-text-dark hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-300"
             >
               <svg
                 className="w-6 h-6"
@@ -40,79 +47,66 @@ function Navbar({ toggleSidebar, isSidebarOpen }) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d={isSidebarOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'}
+                  d="M4 6h16M4 12h16M4 18h16"
                 />
               </svg>
             </button>
           )}
-          <Link to="/" className="flex items-center">
-            <img
-              src={whiteLogo}
-              alt="Gitty Logo"
-              className="h-8 w-auto"
-            />
+          <Link to="/">
+            <img src={logo} alt="Logo" className="h-10 w-auto" />
           </Link>
         </div>
 
-        {isDashboard ? (
-          <div className="flex items-center">
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-300"
-            >
-              Çıkış Yap
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="hidden md:flex space-x-6">
-              <Link
-                to="/"
-                className="text-white hover:text-green-500 transition-colors duration-300 font-medium text-lg"
+        <div className="hidden md:flex space-x-6 items-center">
+          <Link
+            to="/"
+            className="text-text-light dark:text-text-dark hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-300 font-medium"
+          >
+            Anasayfa
+          </Link>
+          <Link
+            to="/hakkimda"
+            className="text-text-light dark:text-text-dark hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-300 font-medium"
+          >
+            Hakkımda
+          </Link>
+          {isDashboard ? (
+            user && (
+              <button
+                onClick={handleLogout}
+                className="bg-primary-light dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-green-600 dark:hover:bg-purple-700 transition-colors duration-300 font-medium"
               >
-                Anasayfa
-              </Link>
-              <Link
-                to="/about"
-                className="text-white hover:text-green-500 transition-colors duration-300 font-medium text-lg"
-              >
-                Hakkımda
-              </Link>
-              <Link
-                to="/services"
-                className="text-white hover:text-green-500 transition-colors duration-300 font-medium text-lg"
-              >
-                Hizmetler
-              </Link>
-              <Link
-                to="/contact"
-                className="text-white hover:text-green-500 transition-colors duration-300 font-medium text-lg"
-              >
-                İletişim
-              </Link>
-            </div>
-
-            <div className="hidden md:flex space-x-4">
+                Çıkış Yap
+              </button>
+            )
+          ) : (
+            <>
               <Link
                 to="/login"
-                className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors duration-300 font-medium text-lg"
+                className="bg-primary-light dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-green-600 dark:hover:bg-purple-700 transition-colors duration-300 font-medium"
               >
                 Giriş Yap
               </Link>
               <Link
-                to="/quote"
-                className="bg-white text-green-600 py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors duration-300 font-medium text-lg"
+                to="/teklif-al"
+                className="bg-secondary-light dark:bg-secondary-dark text-white px-4 py-2 rounded-lg hover:bg-orange-600 dark:hover:bg-orange-700 transition-colors duration-300 font-medium"
               >
                 Teklif Al
               </Link>
-            </div>
-          </>
-        )}
-
-        {!isDashboard && (
+            </>
+          )}
           <button
-            onClick={handleMenuToggle}
-            className="md:hidden text-white focus:outline-none"
+            onClick={toggleTheme}
+            className="text-text-light dark:text-text-dark hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-300"
+          >
+            {theme === 'dark' ? <FaSun size={20} /> : <FaMoon size={20} />}
+          </button>
+        </div>
+
+        <div className="md:hidden">
+          <button
+            onClick={toggleMenu}
+            className="text-text-light dark:text-text-dark hover:text-primary-light dark:hover:text-primary-dark transition-colors duration-300"
           >
             <svg
               className="w-6 h-6"
@@ -125,57 +119,69 @@ function Navbar({ toggleSidebar, isSidebarOpen }) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                d={isMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'}
+                d="M4 6h16M4 12h16M4 18h16"
               />
             </svg>
           </button>
-        )}
+        </div>
       </div>
 
-      {!isDashboard && isMenuOpen && (
-        <div className="md:hidden bg-gray-900 text-white px-4 py-2">
+      {isMenuOpen && (
+        <div className="md:hidden bg-card-light dark:bg-card-dark shadow-soft dark:shadow-soft-dark">
           <Link
             to="/"
-            onClick={() => setIsMenuOpen(false)}
-            className="block py-2 text-white hover:text-green-500 transition-colors duration-300 font-medium text-lg"
+            className="block px-4 py-2 text-text-light dark:text-text-dark hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300"
+            onClick={toggleMenu}
           >
             Anasayfa
           </Link>
           <Link
-            to="/about"
-            onClick={() => setIsMenuOpen(false)}
-            className="block py-2 text-white hover:text-green-500 transition-colors duration-300 font-medium text-lg"
+            to="/hakkimda"
+            className="block px-4 py-2 text-text-light dark:text-text-dark hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300"
+            onClick={toggleMenu}
           >
             Hakkımda
           </Link>
-          <Link
-            to="/services"
-            onClick={() => setIsMenuOpen(false)}
-            className="block py-2 text-white hover:text-green-500 transition-colors duration-300 font-medium text-lg"
+          {isDashboard ? (
+            user && (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  toggleMenu();
+                }}
+                className="block w-full text-left px-4 py-2 text-white bg-primary-light dark:bg-primary-dark hover:bg-green-600 dark:hover:bg-purple-700 transition-colors duration-300"
+              >
+                Çıkış Yap
+              </button>
+            )
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="block px-4 py-2 text-white bg-primary-light dark:bg-primary-dark hover:bg-green-600 dark:hover:bg-purple-700 transition-colors duration-300"
+                onClick={toggleMenu}
+              >
+                Giriş Yap
+              </Link>
+              <Link
+                to="/teklif-al"
+                className="block px-4 py-2 text-white bg-secondary-light dark:bg-secondary-dark hover:bg-orange-600 dark:hover:bg-orange-700 transition-colors duration-300"
+                onClick={toggleMenu}
+              >
+                Teklif Al
+              </Link>
+            </>
+          )}
+          <button
+            onClick={() => {
+              toggleTheme();
+              toggleMenu();
+            }}
+            className="block w-full text-left px-4 py-2 text-text-light dark:text-text-dark hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300 flex items-center space-x-2"
           >
-            Hizmetler
-          </Link>
-          <Link
-            to="/contact"
-            onClick={() => setIsMenuOpen(false)}
-            className="block py-2 text-white hover:text-green-500 transition-colors duration-300 font-medium text-lg"
-          >
-            İletişim
-          </Link>
-          <Link
-            to="/login"
-            onClick={() => setIsMenuOpen(false)}
-            className="block py-2 bg-green-500 text-white text-center rounded-lg hover:bg-green-600 transition-colors duration-300 font-medium text-lg mt-2"
-          >
-            Giriş Yap
-          </Link>
-          <Link
-            to="/quote"
-            onClick={() => setIsMenuOpen(false)}
-            className="block py-2 bg-white text-green-600 text-center rounded-lg hover:bg-gray-100 transition-colors duration-300 font-medium text-lg mt-2"
-          >
-            Teklif Al
-          </Link>
+            {theme === 'dark' ? <FaSun size={20} /> : <FaMoon size={20} />}
+            <span>{theme === 'dark' ? 'Açık Mod' : 'Koyu Mod'}</span>
+          </button>
         </div>
       )}
     </nav>

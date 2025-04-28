@@ -6,9 +6,9 @@ import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
 import { saveAs } from 'file-saver';
 import StatusSelector from './StatusSelector';
+import { logAction } from '../utils/logAction';
 
-// Export fonksiyonları
-const exportToCSV = (records) => {
+const exportToCSV = async (records) => {
   const headers = ['Ad Soyad', 'Telefon', 'E-Posta', 'Son Katılım', 'WP Katılım', 'E-Posta Katılım', 'SMS Katılım', 'Manuel Giriş'];
   const data = records.map(record => [
     record.fields['AD SOYAD'] || '',
@@ -34,9 +34,11 @@ const exportToCSV = (records) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+
+  await logAction('export_csv', { recordCount: records.length });
 };
 
-const exportToExcel = (records) => {
+const exportToExcel = async (records) => {
   const headers = ['Ad Soyad', 'Telefon', 'E-Posta', 'Son Katılım', 'WP Katılım', 'E-Posta Katılım', 'SMS Katılım', 'Manuel Giriş'];
   const data = [
     headers,
@@ -56,9 +58,11 @@ const exportToExcel = (records) => {
   const ws = XLSX.utils.aoa_to_sheet(data);
   XLSX.utils.book_append_sheet(wb, ws, "Katılımcılar");
   XLSX.writeFile(wb, "katilimci-listesi.xlsx");
+
+  await logAction('export_excel', { recordCount: records.length });
 };
 
-const exportToPDF = (records) => {
+const exportToPDF = async (records) => {
   const doc = new jsPDF();
   const headers = [['Ad Soyad', 'Telefon', 'E-Posta', 'Son Katılım', 'WP Katılım', 'E-Posta Katılım', 'SMS Katılım', 'Manuel Giriş']];
   const data = records.map(record => [
@@ -94,20 +98,22 @@ const exportToPDF = (records) => {
   });
 
   doc.save('katilimci-listesi.pdf');
+  await logAction('export_pdf', { recordCount: records.length });
 };
 
 const exportToImage = async (tableRef) => {
   try {
     const canvas = await html2canvas(tableRef.current);
-    canvas.toBlob((blob) => {
+    canvas.toBlob(async (blob) => {
       saveAs(blob, 'katilimci-listesi.jpg');
+      await logAction('export_image', { recordCount: tableRef.current.querySelectorAll('tbody tr').length });
     });
   } catch (err) {
     console.error('Image export failed:', err);
   }
 };
 
-const exportToWord = (records) => {
+const exportToWord = async (records) => {
   const headers = ['Ad Soyad', 'Telefon', 'E-Posta', 'Son Katılım', 'WP Katılım', 'E-Posta Katılım', 'SMS Katılım', 'Manuel Giriş'];
   let htmlContent = `
     <html>
@@ -145,6 +151,7 @@ const exportToWord = (records) => {
 
   const blob = new Blob([htmlContent], { type: 'application/msword' });
   saveAs(blob, 'katilimci-listesi.doc');
+  await logAction('export_word', { recordCount: records.length });
 };
 
 function AirtableData() {
@@ -221,36 +228,36 @@ function AirtableData() {
   const getStatusClass = (status) => {
     switch (status) {
       case 'KATILACAĞIM':
-        return 'bg-green-500 text-white font-medium'; // Daha koyu yeşil
+        return 'bg-green-500 text-white font-medium';
       case 'GELMEYECEĞİM':
-        return 'bg-red-500 text-white font-medium'; // Daha koyu kırmızı
+        return 'bg-red-500 text-white font-medium';
       case 'TELEFON İLE ARA':
-        return 'bg-yellow-400 text-yellow-900 font-medium'; // Daha belirgin sarı
+        return 'bg-yellow-400 text-yellow-900 font-medium';
       case 'ULAŞMADI':
-        return 'bg-orange-500 text-white font-medium'; // Daha koyu turuncu
+        return 'bg-orange-500 text-white font-medium';
       default:
-        return 'bg-gray-500 text-white font-medium'; // Daha koyu gri
+        return 'bg-gray-500 text-white font-medium';
     }
   };
 
   if (loading) {
-    return <p className="text-center text-gray-600">Yükleniyor...</p>;
+    return <p className="text-center text-muted-light dark:text-muted-dark">Yükleniyor...</p>;
   }
 
   if (error) {
-    return <p className="text-center text-red-600">{error}</p>;
+    return <p className="text-center text-red-600 dark:text-red-400">{error}</p>;
   }
 
   return (
     <div className="container mx-auto px-2 sm:px-4">
-      <div className="bg-white p-3 rounded-xl shadow-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-900">Kullanıcı Verileri</h3>
+      <div className="bg-card-light dark:bg-card-dark p-6 rounded-xl shadow-soft dark:shadow-soft-dark">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-bold text-text-light dark:text-text-dark">Kullanıcı Verileri</h3>
           
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center space-x-2"
+              className="px-4 py-2 bg-primary-light dark:bg-primary-dark text-white rounded-lg hover:bg-green-600 dark:hover:bg-purple-700 text-sm font-medium flex items-center space-x-2 transition-colors duration-300"
             >
               <span>Dışa Aktar</span>
               <svg 
@@ -264,16 +271,16 @@ function AirtableData() {
             </button>
 
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-card-light dark:bg-card-dark rounded-md shadow-lg z-50">
                 <div className="py-1">
                   <button
                     onClick={() => {
                       exportToCSV(filteredRecords);
                       setShowExportMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-sm text-muted-light dark:text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700 text-left flex items-center space-x-2 transition-colors duration-300"
                   >
-                    <span className="w-4 h-4 text-green-600">📄</span>
+                    <span className="w-4 h-4 text-green-600 dark:text-green-400">📄</span>
                     <span>CSV olarak indir</span>
                   </button>
                   <button
@@ -281,9 +288,9 @@ function AirtableData() {
                       exportToExcel(filteredRecords);
                       setShowExportMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-sm text-muted-light dark:text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700 text-left flex items-center space-x-2 transition-colors duration-300"
                   >
-                    <span className="w-4 h-4 text-green-600">📊</span>
+                    <span className="w-4 h-4 text-green-600 dark:text-green-400">📊</span>
                     <span>Excel olarak indir</span>
                   </button>
                   <button
@@ -291,9 +298,9 @@ function AirtableData() {
                       exportToPDF(filteredRecords);
                       setShowExportMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-sm text-muted-light dark:text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700 text-left flex items-center space-x-2 transition-colors duration-300"
                   >
-                    <span className="w-4 h-4 text-red-600">📑</span>
+                    <span className="w-4 h-4 text-red-600 dark:text-red-400">📑</span>
                     <span>PDF olarak indir</span>
                   </button>
                   <button
@@ -301,9 +308,9 @@ function AirtableData() {
                       exportToImage(tableRef);
                       setShowExportMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-sm text-muted-light dark:text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700 text-left flex items-center space-x-2 transition-colors duration-300"
                   >
-                    <span className="w-4 h-4 text-purple-600">🖼️</span>
+                    <span className="w-4 h-4 text-purple-600 dark:text-purple-400">🖼️</span>
                     <span>Resim olarak indir</span>
                   </button>
                   <button
@@ -311,9 +318,9 @@ function AirtableData() {
                       exportToWord(filteredRecords);
                       setShowExportMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-sm text-muted-light dark:text-muted-dark hover:bg-gray-100 dark:hover:bg-gray-700 text-left flex items-center space-x-2 transition-colors duration-300"
                   >
-                    <span className="w-4 h-4 text-blue-600">📝</span>
+                    <span className="w-4 h-4 text-blue-600 dark:text-blue-400">📝</span>
                     <span>Word olarak indir</span>
                   </button>
                 </div>
@@ -322,9 +329,9 @@ function AirtableData() {
           </div>
         </div>
 
-        <div className="mb-4 flex flex-col md:flex-row md:space-x-2">
-          <div className="flex-1 mb-2 md:mb-0">
-            <label className="block text-gray-700 mb-1 text-sm" htmlFor="search">
+        <div className="mb-6 flex flex-col md:flex-row md:space-x-4">
+          <div className="flex-1 mb-4 md:mb-0">
+            <label className="block text-muted-light dark:text-muted-dark mb-1 text-sm" htmlFor="search">
               İsim ile Ara
             </label>
             <input
@@ -333,23 +340,23 @@ function AirtableData() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="İsim girin..."
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark transition-colors duration-300"
             />
           </div>
 
           <div className="flex-1">
-            <label className="block text-gray-700 mb-1 text-sm" htmlFor="statusFilter">
+            <label className="block text-muted-light dark:text-muted-dark mb-1 text-sm" htmlFor="statusFilter">
               Katılım Durumu
             </label>
             <select
               id="statusFilter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark transition-colors duration-300"
             >
               <option value="">Tümü</option>
               <option value="KATILACAĞIM">KATILACAĞIM</option>
-              <option value="GELEMEYECEĞİM">GELEMEYECEĞİM</option>
+              <option value="GELMEYECEĞİM">GELMEYECEĞİM</option>
               <option value="TELEFON İLE ARA">TELEFON İLE ARA</option>
             </select>
           </div>
@@ -357,57 +364,57 @@ function AirtableData() {
 
         <div className="overflow-x-auto relative" ref={tableRef}>
           <div className="min-w-full inline-block align-middle">
-            <div className="overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
+            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">✔</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Soyad</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">E-Posta</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Son Katılım</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WP Katılım</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">E-Posta Katılım</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SMS Katılım</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manuel Giriş</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">✔</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">Ad Soyad</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">Telefon</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">E-Posta</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">Son Katılım</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">WP Katılım</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">E-Posta Katılım</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">SMS Katılım</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-light dark:text-muted-dark uppercase tracking-wider">Manuel Giriş</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card-light dark:bg-card-dark divide-y divide-gray-200 dark:divide-gray-600">
                   {filteredRecords.map((record, index) => (
-                    <tr key={record.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-2 py-2 whitespace-nowrap">
-                        <input type="checkbox" />
+                    <tr key={record.id} className={index % 2 === 0 ? 'bg-card-light dark:bg-card-dark' : 'bg-gray-50 dark:bg-gray-800'}>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <input type="checkbox" className="h-4 w-4 text-primary-light dark:text-primary-dark focus:ring-primary-light dark:focus:ring-primary-dark border-gray-300 dark:border-gray-600 rounded" />
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-text-light dark:text-text-dark">
                         {record.fields['AD SOYAD'] || '-'}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-text-light dark:text-text-dark">
                         {record.fields['TELEFON'] || '-'}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-text-light dark:text-text-dark">
                         {record.fields['E POSTA'] || '-'}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`inline-block px-3 py-1 rounded-full text-sm ${getStatusClass(record.fields['SON KATILIM DURUMU'])}`}>
                           {record.fields['SON KATILIM DURUMU'] || '-'}
                         </span>
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`inline-block px-3 py-1 rounded-full text-sm ${getStatusClass(record.fields['WP KATILIM DURUMU'])}`}>
                           {record.fields['WP KATILIM DURUMU'] || '-'}
                         </span>
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`inline-block px-3 py-1 rounded-full text-sm ${getStatusClass(record.fields['E POSTA KATILIM DURUMU'])}`}>
                           {record.fields['E POSTA KATILIM DURUMU'] || '-'}
                         </span>
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`inline-block px-3 py-1 rounded-full text-sm ${getStatusClass(record.fields['SMS KATILIM DURUMU'])}`}>
                           {record.fields['SMS KATILIM DURUMU'] || '-'}
                         </span>
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <StatusSelector
                           recordId={record.id}
                           currentStatus={record.fields['MANUEL GİRİŞ']}

@@ -1,144 +1,104 @@
 import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import mockupImage from '../assets/images/gitty-mockup.png';
-import darkLogo from '../assets/images/Gitty_logo_dark.png';
+import { logAction } from '../utils/logAction';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import loginMockup from '../assets/images/gitty-mockup.png';
 
 function LoginPage() {
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = login(email, password);
-    
-    if (success) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
-    } else {
-      setError('Geçersiz email veya şifre');
+    setError('');
+
+    try {
+      if (isLogin) {
+        await login(email, password);
+        await logAction('login', { email });
+      } else {
+        await signup(email, password);
+        await logAction('signup', { email });
+      }
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 relative">
-      {/* Home Navigation Link */}
-      <Link 
-        to="/" 
-        className="absolute top-4 left-4 text-gray-600 hover:text-green-600 flex items-center gap-2 transition-colors duration-300"
-      >
-        <svg 
-          className="w-5 h-5" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M10 19l-7-7m0 0l7-7m-7 7h18" 
-          />
-        </svg>
-        <span className="font-medium">Ana Sayfa</span>
-      </Link>
-
-      <div className="flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl w-full flex">
-          {/* Left Side - Mockup Image */}
-          <div className="hidden md:block w-1/2 bg-green-500 p-12">
+    <div className="min-h-screen bg-background-light dark:bg-background-dark">
+      <Navbar toggleSidebar={() => {}} isSidebarOpen={false} />
+      <div className="pt-16 flex items-center justify-center min-h-screen">
+        <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between">
+          <div className="w-full md:w-1/2 mb-10 md:mb-0 hidden md:block">
             <img
-              src={mockupImage}
-              alt="Gitty Mockup"
-              className="w-full h-full object-contain"
+              src={loginMockup}
+              alt="Login Mockup"
+              className="w-3/4 mx-auto md:w-full max-w-md"
             />
           </div>
 
-          {/* Right Side - Login Form */}
-          <div className="w-full md:w-1/2 p-8">
-            <div className="flex flex-col items-center">
-              <img
-                src={darkLogo}
-                alt="Gitty Logo"
-                className="h-12 w-auto mb-6"
-              />
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">
-                Üye Girişi
+          <div className="w-full md:w-1/2 max-w-md">
+            <div className="bg-card-light dark:bg-card-dark p-8 rounded-xl shadow-soft dark:shadow-soft-dark">
+              <h2 className="text-3xl font-bold text-center mb-6 text-text-light dark:text-text-dark">
+                {isLogin ? 'Giriş Yap' : 'Kayıt Ol'}
               </h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <div className="rounded-md bg-red-50 p-4">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                  placeholder="Email adresiniz"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Şifre
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                    Beni Hatırla
+              {error && <p className="text-red-600 dark:text-red-400 mb-4 text-center">{error}</p>}
+              <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label className="block text-muted-light dark:text-muted-dark mb-2" htmlFor="email">
+                    E-posta
                   </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark transition-colors duration-300"
+                    required
+                  />
                 </div>
-
-                <div className="text-sm">
-                  <a href="#" className="font-medium text-green-600 hover:text-green-500">
-                    Şifremi Unuttum
-                  </a>
+                <div className="mb-6">
+                  <label className="block text-muted-light dark:text-muted-dark mb-2" htmlFor="password">
+                    Şifre
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark transition-colors duration-300"
+                    required
+                  />
                 </div>
-              </div>
-
-              <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="w-full bg-primary-light dark:bg-primary-dark text-white py-3 rounded-lg hover:bg-green-600 dark:hover:bg-purple-700 transition-colors duration-300 font-medium"
                 >
-                  Giriş Yap
+                  {isLogin ? 'Giriş Yap' : 'Kayıt Ol'}
                 </button>
-              </div>
-            </form>
+              </form>
+              <p className="text-center text-muted-light dark:text-muted-dark mt-4">
+                {isLogin ? "Hesabınız yok mu? " : "Zaten hesabınız var mı? "}
+                <button
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-primary-light dark:text-primary-dark hover:underline font-medium"
+                >
+                  {isLogin ? 'Kayıt Ol' : 'Giriş Yap'}
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

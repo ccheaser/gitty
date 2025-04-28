@@ -1,23 +1,22 @@
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import InfoSection from '../components/InfoSection';
+import Features from '../components/Features';
+import HowItWorks from '../components/HowItWorks';
 import Pricing from '../components/Pricing';
 import Footer from '../components/Footer';
-import { useLocation } from 'react-router-dom';
 
 function HomePage() {
-  const location = useLocation();
-  const isDashboard = location.pathname === '/dashboard';
-
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="min-h-screen bg-background-light dark:bg-background-dark">
       <Navbar toggleSidebar={() => {}} isSidebarOpen={false} />
-      <div className={isDashboard ? 'md:ml-64' : ''}>
+      <main className="pt-16">
         <Hero />
         <InfoSection />
+        <Features />
+        <HowItWorks />
         <Pricing />
-        <Footer />
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 
 function RegisterForm() {
-  const formID = '250983842247061';
-  const [frameHeight, setFrameHeight] = useState('650px'); // Daha uygun bir başlangıç yüksekliği
+  const formID = '250983953018060'; // Register form ID'si (farklı bir ID gerekiyorsa lütfen belirtin)
+  const [frameHeight, setFrameHeight] = useState('650px');
 
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data.type === 'setHeight') {
-        // Form yüksekliğine biraz ekstra alan ekle (buton için)
         setFrameHeight(`${Math.min(event.data.height + 50, 700)}px`);
       }
     };
@@ -18,8 +17,8 @@ function RegisterForm() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-4 md:p-6 bg-gradient-to-r from-green-500 to-green-600">
+      <div className="bg-card-light dark:bg-card-dark rounded-xl shadow-soft dark:shadow-soft-dark overflow-hidden">
+        <div className="p-4 md:p-6 bg-gradient-to-r from-primary-light to-green-600 dark:from-primary-dark dark:to-purple-700">
           <h2 className="text-xl md:text-2xl font-bold text-white text-center">Katılım Formu</h2>
         </div>
         
@@ -27,7 +26,7 @@ function RegisterForm() {
           <div className="w-full">
             <iframe
               id={`JotFormIFrame-${formID}`}
-              title="Kayıt Formu"
+              title="Katılım Formu"
               allowTransparency="true"
               allowFullScreen={true}
               allow="geolocation; microphone; camera"
@@ -38,7 +37,7 @@ function RegisterForm() {
                 height: frameHeight,
                 border: 'none',
                 backgroundColor: 'transparent',
-                minHeight: '950px', // Minimum yükseklik azaltıldı
+                minHeight: '950px',
                 display: 'block',
                 margin: '0 auto'
               }}

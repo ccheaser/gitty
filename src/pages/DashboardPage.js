@@ -7,6 +7,7 @@ import AirtableChart from '../components/AirtableChart';
 import AddParticipant from '../components/AddParticipant';
 import RegisterForm from '../components/RegisterForm';
 import QrReader from '../components/QrReader';
+import LogsPage from './LogsPage';
 
 function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -26,17 +27,17 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-background-dark">
         <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-          <p className="mt-4 text-gray-600">Yükleniyor...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 dark:border-primary-dark"></div>
+          <p className="mt-4 text-gray-600 dark:text-muted-dark">Yükleniyor...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-100 dark:bg-background-dark">
       <Navbar toggleSidebar={toggleSidebar} />
       <div className="flex flex-1 overflow-hidden pt-16"> {/* pt-16 eklendi - navbar için boşluk */}
         <Sidebar 
@@ -52,6 +53,7 @@ function DashboardPage() {
             {activeTab === 'add' && <AddParticipant />}
             {activeTab === 'register' && <RegisterForm />}
             {activeTab === 'qr' && <QrReader />}
+            {activeTab === 'logs' && <LogsPage />}
           </div>
         </div>
       </div>

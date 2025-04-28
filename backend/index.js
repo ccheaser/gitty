@@ -30,7 +30,19 @@ if (!NETGSM_USERNAME || !NETGSM_PASSWORD || !NETGSM_MSGHEADER) {
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-app.use(cors());
+// CORS options
+const corsOptions = {
+  origin: [
+    'http://31.57.33.227',
+    'http://localhost:3000',
+    'http://your-domain.com'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const isValidEmail = (email) => {
